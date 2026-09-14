@@ -1,0 +1,21 @@
+# Compilados
+*.o
+*.out
+a.out
+waterwave
+waterwave_openmp
+waterwave_mpi
+waterwave_pthreads_openmp
+waterwave_mpi_openmp
+
+# Salidas de la simulación
+*.dat
+*.csv
+salida*/
+dumps/
+
+# Sistema operativo / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

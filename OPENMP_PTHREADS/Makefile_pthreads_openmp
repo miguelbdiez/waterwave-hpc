@@ -1,0 +1,82 @@
+# Makefile para la simulación de ondas de agua
+
+CC = gcc
+CFLAGS = -Wall -Wextra -O2 -std=c11 -pthread -fopenmp
+LDFLAGS = -lm -lpthread -fopenmp
+
+TARGET = waterwave_pthreads_openmp
+TEST_TARGET = test_threadpool
+SOURCES = waterwave.c threadpool.c
+TEST_SOURCES = test_threadpool.c threadpool.c
+HEADERS = waterwave.h threadpool.h
+CONFIG = config.txt
+
+# Regla principal
+all: $(TARGET)
+
+# Compilar el ejecutable principal
+$(TARGET): $(SOURCES) $(HEADERS)
+	@echo "Compilando $(TARGET)..."
+	$(CC) $(CFLAGS) $(SOURCES) -o $(TARGET) $(LDFLAGS)
+	@echo "✓ Compilación exitosa!"
+
+# Compilar el test de threadpool
+test: $(TEST_TARGET)
+
+$(TEST_TARGET): $(TEST_SOURCES) threadpool.h
+	@echo "Compilando $(TEST_TARGET)..."
+	$(CC) $(CFLAGS) $(TEST_SOURCES) -o $(TEST_TARGET) $(LDFLAGS)
+	@echo "✓ Test compilado!"
+
+# Compilar test de paralelización
+test-parallel: test_parallel
+	./test_parallel
+
+test_parallel: test_parallel.c threadpool.c waterwave.h threadpool.h
+	@echo "Compilando test_parallel..."
+	$(CC) $(CFLAGS) -DTEST_MODE test_parallel.c threadpool.c -o test_parallel $(LDFLAGS)
+	@echo "✓ Test parallel compilado!"
+
+# Ejecutar test de threadpool
+run-test: $(TEST_TARGET)
+	@echo "Ejecutando pruebas del ThreadPool..."
+	./$(TEST_TARGET)
+
+# Ejecutar el programa
+run: $(TARGET)
+	@echo "Ejecutando simulación..."
+	./$(TARGET)
+
+# Compilar con información de debug
+debug: CFLAGS += -g -DDEBUG
+debug: clean $(TARGET)
+	@echo "✓ Versión de debug compilada!"
+
+# Limpiar archivos generados
+clean:
+	@echo "Limpiando archivos..."
+	rm -f $(TARGET) $(TEST_TARGET) test_parallel *.o
+	@echo "✓ Limpieza completada!"
+
+# Verificar que existe el archivo de configuración
+check-config:
+	@if [ ! -f $(CONFIG) ]; then \
+		echo "⚠ Advertencia: No se encuentra $(CONFIG)"; \
+		echo "Se usarán valores por defecto."; \
+	else \
+		echo "✓ Archivo de configuración encontrado: $(CONFIG)"; \
+	fi
+
+# Mostrar ayuda
+help:
+	@echo "Comandos disponibles:"
+	@echo "  make           - Compila el programa principal"
+	@echo "  make test      - Compila el test de ThreadPool"
+	@echo "  make run-test  - Compila y ejecuta el test"
+	@echo "  make run       - Compila y ejecuta el programa"
+	@echo "  make debug     - Compila con información de debug"
+	@echo "  make clean     - Elimina archivos compilados"
+	@echo "  make check-config - Verifica el archivo de configuración"
+	@echo "  make help      - Muestra esta ayuda"
+
+.PHONY: all run debug clean check-config help test run-test

@@ -1,0 +1,42 @@
+# Makefile para waterwave con MPI + OpenMP
+# Compilación híbrida que combina message passing (MPI) con memoria compartida (OpenMP)
+
+CC = mpicc
+CFLAGS = -Wall -Wextra -O2 -std=c11 -fopenmp
+LDFLAGS = -lm -fopenmp
+
+TARGET = waterwave_mpi_openmp
+# El fuente de esta variante es el hibrido, no el de MPI puro.
+SOURCES = waterwave_mpi_openmp.c
+HEADERS = waterwave_mpi.h
+
+.PHONY: all clean run
+
+all: $(TARGET)
+
+$(TARGET): $(SOURCES) $(HEADERS)
+	@echo "═══════════════════════════════════════════════════"
+	@echo "  Compilando $(TARGET) (MPI + OpenMP)..."
+	@echo "═══════════════════════════════════════════════════"
+	$(CC) $(CFLAGS) $(SOURCES) -o $(TARGET) $(LDFLAGS)
+	@echo "✓ Compilación exitosa!"
+	@echo ""
+
+clean:
+	@echo "Limpiando archivos..."
+	rm -f $(TARGET) *.o
+	@echo "✓ Limpieza completada!"
+
+run: $(TARGET)
+	@echo "Ejecutando $(TARGET)..."
+	mpirun -np 4 ./$(TARGET) config.txt
+
+help:
+	@echo "Targets disponibles:"
+	@echo "  make         - Compila el programa"
+	@echo "  make clean   - Limpia archivos compilados"
+	@echo "  make run     - Ejecuta con 4 procesos"
+	@echo ""
+	@echo "Ejemplo de ejecución manual:"
+	@echo "  mpirun -np 4 -x OMP_NUM_THREADS=2 ./$(TARGET) config.txt"
+	@echo "  (4 procesos MPI × 2 threads OpenMP = 8 threads totales)"

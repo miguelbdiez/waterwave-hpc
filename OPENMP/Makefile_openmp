@@ -1,0 +1,19 @@
+CC = gcc
+CFLAGS = -Wall -Wextra -O2 -std=c11 -fopenmp
+LDFLAGS = -lm -fopenmp
+
+TARGET = waterwave_openmp
+
+all: $(TARGET)
+
+$(TARGET): waterwave_openmp.c
+	@echo "Compilando con OpenMP..."
+	$(CC) $(CFLAGS) waterwave_openmp.c -o $(TARGET) $(LDFLAGS)
+	@echo "✓ Compilación exitosa!"
+
+clean:
+	@echo "Limpiando..."
+	rm -f $(TARGET)
+	@echo "✓ Limpieza completada!"
+
+.PHONY: all clean

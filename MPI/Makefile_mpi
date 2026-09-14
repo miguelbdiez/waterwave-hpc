@@ -1,0 +1,124 @@
+# Makefile para Waterwave MPI
+# Compilación y ejecución con MPI
+
+# Compilador MPI
+MPICC = mpicc
+
+# Flags de compilación
+CFLAGS = -Wall -Wextra -O2 -std=c11
+LDFLAGS = -lm
+
+# Archivos fuente
+SOURCES = waterwave_mpi.c
+HEADERS = waterwave_mpi.h
+TARGET = waterwave_mpi
+
+# Número de procesos por defecto
+NP = 4
+
+# ==================================================
+# REGLAS PRINCIPALES
+# ==================================================
+
+.PHONY: all clean run help test
+
+# Compilar el programa
+all: $(TARGET)
+
+$(TARGET): $(SOURCES) $(HEADERS)
+	@echo "Compilando $(TARGET) con MPI..."
+	$(MPICC) $(CFLAGS) $(SOURCES) -o $(TARGET) $(LDFLAGS)
+	@echo "✓ Compilación exitosa!"
+
+# Ejecutar con mpirun
+run: $(TARGET)
+	@echo "Ejecutando con $(NP) procesos..."
+	mpirun -np $(NP) ./$(TARGET)
+
+# Ejecutar con configuración específica
+run-config: $(TARGET)
+	@echo "Ejecutando con $(NP) procesos y config_mpi.txt..."
+	mpirun -np $(NP) ./$(TARGET) config_mpi.txt
+
+# Test rápido (grid pequeño)
+test: $(TARGET)
+	@echo "Test rápido: Grid 32x32, 2 procesos, 100 steps..."
+	GRID_SIZE=32 STEP_COUNT=100 DUMP_EVERY=50 mpirun -np 2 ./$(TARGET)
+
+# Test medio
+test-medium: $(TARGET)
+	@echo "Test medio: Grid 64x64, 4 procesos, 1000 steps..."
+	GRID_SIZE=64 STEP_COUNT=1000 DUMP_EVERY=1000 mpirun -np 4 ./$(TARGET)
+
+# Test grande (como el PDF)
+test-large: $(TARGET)
+	@echo "Test grande: Grid 128x128, 4 procesos, 10000 steps..."
+	GRID_SIZE=128 STEP_COUNT=10000 DUMP_EVERY=10000 mpirun -np 4 ./$(TARGET)
+
+# Benchmark (sin salida)
+benchmark: $(TARGET)
+	@echo "Benchmark: Grid 128x128, 4 procesos, 10000 steps (sin output)..."
+	GRID_SIZE=128 STEP_COUNT=10000 DUMP_EVERY=999999 mpirun -np 4 ./$(TARGET)
+
+# Ejecutar con diferentes números de procesos
+run-1: $(TARGET)
+	@echo "Ejecutando con 1 proceso..."
+	mpirun -np 1 ./$(TARGET)
+
+run-2: $(TARGET)
+	@echo "Ejecutando con 2 procesos..."
+	mpirun -np 2 ./$(TARGET)
+
+run-4: $(TARGET)
+	@echo "Ejecutando con 4 procesos..."
+	mpirun -np 4 ./$(TARGET)
+
+run-8: $(TARGET)
+	@echo "Ejecutando con 8 procesos..."
+	mpirun -np 8 ./$(TARGET)
+
+# Comparación de procesos
+compare: $(TARGET)
+	@echo "Comparando rendimiento con diferente número de procesos..."
+	@echo "=== 1 proceso ==="
+	@GRID_SIZE=64 STEP_COUNT=1000 DUMP_EVERY=1000 mpirun -np 1 ./$(TARGET) 2>&1 | grep "Tiempo transcurrido"
+	@echo ""
+	@echo "=== 2 procesos ==="
+	@GRID_SIZE=64 STEP_COUNT=1000 DUMP_EVERY=1000 mpirun -np 2 ./$(TARGET) 2>&1 | grep "Tiempo transcurrido"
+	@echo ""
+	@echo "=== 4 procesos ==="
+	@GRID_SIZE=64 STEP_COUNT=1000 DUMP_EVERY=1000 mpirun -np 4 ./$(TARGET) 2>&1 | grep "Tiempo transcurrido"
+
+# Limpiar archivos generados
+clean:
+	@echo "Limpiando archivos..."
+	rm -f $(TARGET) *.o
+	@echo "✓ Limpieza completada!"
+
+# Ayuda
+help:
+	@echo "=========================================="
+	@echo "  Makefile para Waterwave MPI"
+	@echo "=========================================="
+	@echo ""
+	@echo "Comandos disponibles:"
+	@echo "  make              - Compilar el programa"
+	@echo "  make run          - Ejecutar con 4 procesos (default)"
+	@echo "  make run NP=8     - Ejecutar con 8 procesos"
+	@echo "  make test         - Test rápido (grid 32x32)"
+	@echo "  make test-medium  - Test medio (grid 64x64)"
+	@echo "  make test-large   - Test grande (grid 128x128)"
+	@echo "  make benchmark    - Benchmark sin output"
+	@echo "  make compare      - Comparar 1, 2, 4 procesos"
+	@echo "  make clean        - Limpiar archivos"
+	@echo ""
+	@echo "Variables de entorno:"
+	@echo "  GRID_SIZE=N       - Tamaño del grid (default: 64)"
+	@echo "  STEP_COUNT=N      - Número de steps (default: 1000)"
+	@echo "  DUMP_EVERY=N      - Imprimir cada N steps (default: 100)"
+	@echo ""
+	@echo "Ejemplos:"
+	@echo "  make run NP=2"
+	@echo "  GRID_SIZE=128 make run NP=4"
+	@echo "  GRID_SIZE=256 STEP_COUNT=10000 mpirun -np 8 ./$(TARGET)"
+	@echo ""
